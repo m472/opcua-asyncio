@@ -93,6 +93,7 @@ class CodeGenerator:
         self.write("from datetime import datetime, timezone")
         self.write("from enum import IntEnum, IntFlag")
         self.write("from dataclasses import dataclass, field")
+        self.write("from typing import TYPE_CHECKING")
         self.write("")
         self.write("from asyncua.ua.uatypes import FROZEN")
         self.write("from asyncua.ua.uatypes import SByte, Byte, Bytes, ByteString, Int16, Int32, Int64, UInt16, UInt32")
@@ -107,6 +108,9 @@ class CodeGenerator:
         )
         self.write("from asyncua.ua.uatypes import extension_object_typeids, extension_objects_by_typeid")
         self.write("from asyncua.ua.object_ids import ObjectIds")
+        self.write("")
+        self.write("if TYPE_CHECKING:")
+        self.write("    from asyncua import ua")
 
     def generate_enum_code(self, enum: Enum) -> None:
         """Write IntFlag class definition for an Enum."""
