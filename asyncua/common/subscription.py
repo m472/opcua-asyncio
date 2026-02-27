@@ -443,8 +443,6 @@ class Subscription:
             data.client_handle = mi.RequestedParameters.ClientHandle
             data.node = Node(self.server, mi.ItemToMonitor.NodeId)
             data.attribute = mi.ItemToMonitor.AttributeId
-            # TODO: Either use the filter from request or from response.
-            #  Here it uses from request, in modify it uses from response
             data.mfilter = mi.RequestedParameters.Filter
             self._monitored_items[mi.RequestedParameters.ClientHandle] = data
         results = await self.server.create_monitored_items(params)
@@ -515,7 +513,7 @@ class Subscription:
         params.SubscriptionId = self.subscription_id
         params.ItemsToModify.append(modif_item)
         results = await self.server.modify_monitored_items(params)
-        item_to_change.mfilter = results[0].FilterResult
+        item_to_change.mfilter = modif_item.RequestedParameters.Filter
         return results
 
     def _modify_monitored_item_request(

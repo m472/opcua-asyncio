@@ -7,6 +7,7 @@ Date:2025-11-13 08:18:24.401269+00:00
 from datetime import datetime, timezone
 from enum import IntEnum, IntFlag
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from asyncua.ua.uatypes import FROZEN
 from asyncua.ua.uatypes import SByte, Byte, Bytes, ByteString, Int16, Int32, Int64, UInt16, UInt32
@@ -17,6 +18,9 @@ from asyncua.ua.uatypes import RelativePath, RelativePathElement
 from asyncua.ua.uatypes import NodeId, FourByteNodeId, ExpandedNodeId, ExtensionObject, DiagnosticInfo
 from asyncua.ua.uatypes import extension_object_typeids, extension_objects_by_typeid
 from asyncua.ua.object_ids import ObjectIds
+
+if TYPE_CHECKING:
+    from asyncua import ua
 
 
 Image = ByteString
