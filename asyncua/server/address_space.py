@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import collections.abc
 import dataclasses
+import inspect
 import logging
 import pickle
 import shelve
@@ -617,7 +618,7 @@ class MethodService:
         return res
 
     async def _run_method(self, func, parent, *args):
-        if asyncio.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
             return await func(parent, *args)
         p = partial(func, parent, *args)
         res = await asyncio.get_event_loop().run_in_executor(self._pool, p)
@@ -780,16 +781,15 @@ class AddressSpace:
         self._nodes = LazyLoadingDict(shelve.open(str(path), "r"))
 
     def read_attribute_value(self, nodeid: ua.NodeId, attr: ua.AttributeIds) -> ua.DataValue:
-        # self.logger.debug("get attr val: %s %s", nodeid, attr)
-        if nodeid not in self._nodes:
+        node = self._nodes.get(nodeid)
+        if node is None:
             dv = ua.DataValue(StatusCode=ua.StatusCode(ua.StatusCodes.BadNodeIdUnknown))
             return dv
-        node = self._nodes[nodeid]
         if attr not in node.attributes:
             dv = ua.DataValue(StatusCode=ua.StatusCode(ua.StatusCodes.BadAttributeIdInvalid))
             return dv
         attval = node.attributes[attr]
-        # TODO: async support by using asyncio.iscoroutinefunction()
+        # TODO: async support by using inspect.iscoroutinefunction()
         if attval.value_callback:
             return attval.value_callback(nodeid, attr)
         return attval.value  # type: ignore[return-value] # .value must be filled

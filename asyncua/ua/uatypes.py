@@ -41,11 +41,19 @@ MAX_INT64 = 2**63 - 1
 
 
 def type_is_optional(uatype) -> bool:
-    return get_origin(uatype) is types.UnionType and type(None) in get_args(uatype)
+    origin = get_origin(uatype)
+    union_types = (Union,)
+    if hasattr(types, "UnionType"):
+        union_types += (types.UnionType,)  # type: ignore[attr-defined]
+    return origin in union_types and type(None) in get_args(uatype)
 
 
 def type_is_union(uatype):
-    return get_origin(uatype) == Union
+    origin = get_origin(uatype)
+    union_types = (Union,)
+    if hasattr(types, "UnionType"):
+        union_types += (types.UnionType,)  # type: ignore[attr-defined]
+    return origin in union_types
 
 
 def type_is_list(uatype):
@@ -192,9 +200,9 @@ class DateTime(datetime):
 class Guid(uuid.UUID):
     pass
 
+
 class Enumeration(IntEnum):
     pass
-
 
 
 _microsecond = timedelta(microseconds=1)
@@ -229,9 +237,6 @@ def win_epoch_to_datetime(epch):
     if epch < 0:
         return FILETIME_EPOCH_AS_UTC_DATETIME
     return FILETIME_EPOCH_AS_UTC_DATETIME + timedelta(microseconds=epch // 10)
-
-
-FROZEN: bool = False
 
 
 class ValueRank(IntEnum):
@@ -350,7 +355,7 @@ class EventNotifier(_MaskEnum):
     HistoryWrite = 3
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True)
 class StatusCode:
     """
     :ivar value:
@@ -424,7 +429,7 @@ class NodeIdType(IntEnum):
     ByteString = 5
 
 
-@dataclass(frozen=True, eq=False, order=False)
+@dataclass(eq=False, order=False, slots=True)
 class NodeId:
     """
     NodeId Object
@@ -607,7 +612,7 @@ class NodeId:
         return asyncua.ua.ua_binary.nodeid_to_binary(self)
 
 
-@dataclass(frozen=True, eq=False, order=False)
+@dataclass(eq=False, order=False, slots=True)
 class TwoByteNodeId(NodeId):
     def __post_init__(self):
         object.__setattr__(self, "NodeIdType", NodeIdType.TwoByte)
@@ -619,7 +624,7 @@ class TwoByteNodeId(NodeId):
             raise ValueError(f"{self.__class__.__name__}  cannot have NamespaceIndex != 0")
 
 
-@dataclass(frozen=True, eq=False, order=False)
+@dataclass(eq=False, order=False, slots=True)
 class FourByteNodeId(NodeId):
     def __post_init__(self):
         object.__setattr__(self, "NodeIdType", NodeIdType.FourByte)
@@ -631,7 +636,7 @@ class FourByteNodeId(NodeId):
             raise ValueError(f"{self.__class__.__name__} cannot have NamespaceIndex != 0")
 
 
-@dataclass(frozen=True, eq=False, order=False)
+@dataclass(eq=False, order=False, slots=True)
 class NumericNodeId(NodeId):
     def __post_init__(self):
         object.__setattr__(self, "NodeIdType", NodeIdType.Numeric)
@@ -639,7 +644,7 @@ class NumericNodeId(NodeId):
             raise ValueError(f"{self.__class__.__name__} Identifier must be int")
 
 
-@dataclass(frozen=True, eq=False, order=False)
+@dataclass(eq=False, order=False, slots=True)
 class ByteStringNodeId(NodeId):
     def __post_init__(self):
         object.__setattr__(self, "NodeIdType", NodeIdType.ByteString)
@@ -647,7 +652,7 @@ class ByteStringNodeId(NodeId):
             raise ValueError(f"{self.__class__.__name__} Identifier must be bytes")
 
 
-@dataclass(frozen=True, eq=False, order=False)
+@dataclass(eq=False, order=False, slots=True)
 class GuidNodeId(NodeId):
     def __post_init__(self):
         object.__setattr__(self, "NodeIdType", NodeIdType.Guid)
@@ -655,7 +660,7 @@ class GuidNodeId(NodeId):
             raise ValueError(f"{self.__class__.__name__} Identifier must be uuid")
 
 
-@dataclass(frozen=True, eq=False, order=False)
+@dataclass(eq=False, order=False, slots=True)
 class StringNodeId(NodeId):
     def __post_init__(self):
         object.__setattr__(self, "NodeIdType", NodeIdType.String)
@@ -663,7 +668,7 @@ class StringNodeId(NodeId):
             raise ValueError(f"{self.__class__.__name__} Identifier must be string")
 
 
-@dataclass(frozen=True, eq=False, order=False)
+@dataclass(eq=False, order=False, slots=True)
 class ExpandedNodeId(NodeId):
     NamespaceUri: String | None = field(default=None, compare=True)
     ServerIndex: Int32 = field(default=0, compare=True)
@@ -678,7 +683,7 @@ class ExpandedNodeId(NodeId):
         return ";".join(string)
 
 
-@dataclass(frozen=True, init=False, order=True)
+@dataclass(init=False, order=True, slots=True)
 class QualifiedName:
     """
     A string qualified with a namespace index.
@@ -763,7 +768,7 @@ class RelativePath:
         return RelativePathFormatter(self).to_string()
 
 
-@dataclass(frozen=True, init=False)
+@dataclass(init=False, slots=True)
 class LocalizedText:
     """
     A string qualified with a namespace index.
@@ -777,6 +782,7 @@ class LocalizedText:
         # need to write init method since args ar inverted in original implementation
         object.__setattr__(self, "Text", Text)
         object.__setattr__(self, "Locale", Locale)
+        object.__setattr__(self, "Encoding", 0)
 
         if self.Text is not None:
             if not isinstance(self.Text, str):
@@ -909,7 +915,7 @@ class VariantTypeCustom:
         return self.value.__hash__()
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True)
 class Variant:
     """
     Create an OPC-UA Variant object.
@@ -1058,7 +1064,7 @@ UInteger = Variant
 Integer = Variant
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True)
 class DataValue:
     """
     A value with an associated timestamp, and quality.
@@ -1095,7 +1101,7 @@ class DataValue:
             object.__setattr__(self, "Value", Variant(self.Value))
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True)
 class DiagnosticInfo:
     """
     A recursive structure containing diagnostic information associated with a status code.
